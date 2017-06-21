@@ -7,6 +7,6 @@ export function initializeCustomElements(app: Application, customElementDefiniti
   });
 }
 
-export function initializeCustomElement(app: Application, componentName: string, elementName: string): void {
-  window.customElements.define(elementName, glimmerElementFactory(app, componentName));
+export function initializeCustomElement(app: Application, componentName: string, elementName: string, attributes: string[]): void {
+  window.customElements.define(elementName, glimmerElementFactory(app, componentName, attributes));
 }

@@ -106,7 +106,6 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
   }
 
   didCreate(bucket: ComponentStateBucket) {
-    bucket.component.element = bucket.component.shadowDom.parentNode.host;
     bucket.component.didInsertElement();
   }
 
