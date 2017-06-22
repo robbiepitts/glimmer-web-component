@@ -11,17 +11,14 @@ function glimmerElementFactory(app: Application, componentName: string, attribut
     connectedCallback: {
       value: function connectedCallback(): void {
         let shadowRoot = this.attachShadow({ mode: 'open' });
-        app.renderComponent(componentName, shadowRoot);
+        app.renderComponent(componentName, shadowRoot, { injections: { customElementAttributes: { color: this.attributes.color.value } } });
       }
     },
 
-    // Respond to attribute changes.
     attributeChangedCallback: {
       value: function attributeChangedCallback(attr, oldValue, newValue) {
-        console.log('text changed!');
-        if (attr == 'text') {
-          console.log('text changed!');
-        }
+        if (!this.component) return;
+        this.component.customElementAttributes = Object.assign({}, this.component.customElementAttributes, { [attr]: newValue });
       }   
     }   
   });

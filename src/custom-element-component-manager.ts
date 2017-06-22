@@ -33,13 +33,13 @@ export class ComponentStateBucket {
   public name: string;
   public component: Component;
 
-  constructor(definition: ComponentDefinition, owner: Owner) {
+  constructor(definition: ComponentDefinition, args: CapturedArguments, owner: Owner) {
     let componentFactory = definition.componentFactory;
     let name = definition.name;
 
-    let injections = {
+    let injections = Object.assign({
       debugName: name
-    };
+    }, args.named.value().injections);
 
     setOwner(injections, owner);
     this.component = componentFactory.create(injections);
@@ -75,12 +75,12 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
     return null;
   }
 
-  create(environment: Environment, definition: ComponentDefinition): ComponentStateBucket {
+  create(environment: Environment, definition: ComponentDefinition, volatileArgs: Arguments): ComponentStateBucket {
     let componentFactory = definition.componentFactory;
     if (!componentFactory) { throw 'Bad'; }
 
     let owner = getOwner(this.env);
-    return new ComponentStateBucket(definition, owner);
+    return new ComponentStateBucket(definition, volatileArgs.capture(), owner);
   }
 
   createComponentDefinition(name: string, template: Template<any>, componentFactory: Factory<Component>): ComponentDefinition {
@@ -106,6 +106,8 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
   }
 
   didCreate(bucket: ComponentStateBucket) {
+    let element = bucket.component.shadowDom.parentNode.host;
+    element.component = bucket.component;
     bucket.component.didInsertElement();
   }
 

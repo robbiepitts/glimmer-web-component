@@ -4,6 +4,7 @@ import { Dict } from '@glimmer/util';
 
 class Component {
   @tracked element: Simple.Element;
+  @tracked customElementAttributes = {};
   shadowDom: Simple.Element;
   debugName: string;
 
