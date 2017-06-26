@@ -16,7 +16,7 @@ class Component {
     Object.assign(this, options);
   }
 
-  didInsertElement() { }
+  didAppendLayout() { }
 
   didUpdate() { }
 

@@ -56,7 +56,7 @@ class LayoutCompiler {
   }
 
   compile(builder: ComponentLayoutBuilder): void {
-    builder.fromLayout(this.name, this.template);
+    builder.wrapLayout(this.template);
   }
 }
 
@@ -98,17 +98,13 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
     return new RootReference(bucket.component);
   }
 
-  didCreateElement(bucket: ComponentStateBucket, element: Simple.Element) {
-    bucket.component.shadowDom = element;
-  }
-
   didRenderLayout(bucket: ComponentStateBucket, bounds: Bounds) {
+    bucket.component.element = bounds.parentElement().host;
   }
 
   didCreate(bucket: ComponentStateBucket) {
-    let element = bucket.component.shadowDom.parentNode.host;
-    element.component = bucket.component;
-    bucket.component.didInsertElement();
+    bucket.component.element.component = bucket.component;
+    bucket.component.didAppendLayout();
   }
 
   getTag(): null {
