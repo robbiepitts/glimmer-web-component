@@ -3,7 +3,7 @@ import glimmerElementFactory from './glimmer-element';
 
 export function initializeCustomElements(app: Application, customElementDefinitions: string[]): void {
   customElementDefinitions.forEach(name => {
-    initializeCustomElement(app, name, name);
+    initializeCustomElement(app, name, name, []);
   });
 }
 

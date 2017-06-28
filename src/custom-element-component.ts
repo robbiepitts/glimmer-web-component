@@ -2,10 +2,13 @@ import { Simple } from '@glimmer/runtime';
 import { tracked } from '@glimmer/component';
 import { Dict } from '@glimmer/util';
 
+export interface CustomElementComponentArgs {
+  htmlAttributes: Dict<string>;
+}
+
 class Component {
-  @tracked element: Simple.Element;
-  @tracked customElementAttributes = {};
-  shadowDom: Simple.Element;
+  element: Simple.Element;
+  @tracked args: CustomElementComponentArgs;
   debugName: string;
 
   static create(injections: any) {
@@ -36,13 +39,3 @@ export default Component;
 export interface ComponentFactory {
   create(injections: object): Component;
 }
-
-
-// // caller
-// <my-button text='bar'>
-// </my-button>
-
-// // my-button/template.hbs
-// <button>
-//   {{text}}
-// </button>

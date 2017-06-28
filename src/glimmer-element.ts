@@ -1,24 +1,33 @@
 import Application from '@glimmer/application';
+import { Simple } from '@glimmer/runtime';
+import { Dict } from '@glimmer/util';
 
-function glimmerElementFactory(app: Application, componentName: string, attributes: string[]) {
+function glimmerElementFactory(app: Application, componentName: string, htmlAttributes: string[]) {
   function GlimmerElement() {
     return Reflect.construct(HTMLElement, [], GlimmerElement);
   }
 
-  GlimmerElement.observedAttributes = attributes;
+  GlimmerElement.observedAttributes = htmlAttributes;
   GlimmerElement.prototype = Object.create(HTMLElement.prototype, {
     constructor: { value: GlimmerElement },
     connectedCallback: {
       value: function connectedCallback(): void {
         let shadowRoot = this.attachShadow({ mode: 'open' });
-        app.renderComponent(componentName, shadowRoot, { injections: { customElementAttributes: { color: this.attributes.color.value } } });
+        let attributesWithValues = htmlAttributes.reduceRight((memo, current): Dict<string> => {
+          return Object.assign({}, memo, { [current]: this.attributes[current].value });
+        }, <Dict<string>>{});
+
+        app.renderComponent(componentName, shadowRoot, {
+          args: { htmlAttributes: attributesWithValues }
+        });
       }
     },
 
     attributeChangedCallback: {
-      value: function attributeChangedCallback(attr, oldValue, newValue) {
+      value: function attributeChangedCallback(attr: string, oldValue: string, newValue: string) {
         if (!this.component) return;
-        this.component.customElementAttributes = Object.assign({}, this.component.customElementAttributes, { [attr]: newValue });
+        let htmlAttributes = Object.assign({}, this.component.args.htmlAttributes, { [attr]: newValue })
+        this.component.args = { htmlAttributes };
       }   
     }   
   });

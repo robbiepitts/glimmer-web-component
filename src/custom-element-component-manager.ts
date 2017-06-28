@@ -9,13 +9,13 @@ import {
   ComponentManager as GlimmerComponentManager,
   DynamicScope,
   Environment,
-  Simple,
   CompiledDynamicProgram,
   Arguments,
   Template,
   CapturedArguments,
   compileLayout,
-  ComponentLayoutBuilder
+  ComponentLayoutBuilder,
+  Simple
 } from '@glimmer/runtime';
 import {
   TemplateMeta
@@ -23,7 +23,7 @@ import {
 import Component from './custom-element-component';
 import ComponentDefinition from './custom-element-component-definition';
 import { RootReference } from '@glimmer/component';
-import { Dict, Destroyable } from '@glimmer/util';
+import { Dict, Destroyable, Opaque } from '@glimmer/util';
 
 export interface ConstructorOptions {
   env: Environment;
@@ -32,17 +32,25 @@ export interface ConstructorOptions {
 export class ComponentStateBucket {
   public name: string;
   public component: Component;
+  public args: CapturedArguments;
 
   constructor(definition: ComponentDefinition, args: CapturedArguments, owner: Owner) {
     let componentFactory = definition.componentFactory;
     let name = definition.name;
 
-    let injections = Object.assign({
-      debugName: name
-    }, args.named.value().injections);
+    this.args = args;
+
+    let injections = {
+      debugName: name,
+      args: this.namedArgsSnapshot()
+    };
 
     setOwner(injections, owner);
     this.component = componentFactory.create(injections);
+  }
+
+  namedArgsSnapshot(): Readonly<Dict<Opaque>> {
+    return Object.freeze(this.args.named.value());
   }
 }
 
@@ -99,11 +107,11 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
   }
 
   didRenderLayout(bucket: ComponentStateBucket, bounds: Bounds) {
-    bucket.component.element = bounds.parentElement().host;
+    bucket.component.element = (bounds.parentElement() as any as ShadowRoot).host as Simple.Element;
   }
 
   didCreate(bucket: ComponentStateBucket) {
-    bucket.component.element.component = bucket.component;
+    (bucket.component.element as any)['component'] = bucket.component;
     bucket.component.didAppendLayout();
   }
 
