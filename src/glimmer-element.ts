@@ -1,6 +1,5 @@
-import Application from '@glimmer/application';
-import { Simple } from '@glimmer/runtime';
-import { Dict } from '@glimmer/util';
+import Application, { prepareNamedArgs } from '@glimmer/application';
+import { Dict, EMPTY_ARRAY } from '@glimmer/util';
 
 function glimmerElementFactory(app: Application, componentName: string, htmlAttributes: string[]) {
   function GlimmerElement() {
@@ -13,21 +12,27 @@ function glimmerElementFactory(app: Application, componentName: string, htmlAttr
     connectedCallback: {
       value: function connectedCallback(): void {
         let shadowRoot = this.attachShadow({ mode: 'open' });
-        let attributesWithValues = htmlAttributes.reduceRight((memo, current): Dict<string> => {
+        let attributesWithValues = htmlAttributes.reduce((memo, current): Dict<string> => {
           return Object.assign({}, memo, { [current]: this.attributes[current].value });
         }, <Dict<string>>{});
+        let args = this.args = {
+          positional: EMPTY_ARRAY,
+          named: prepareNamedArgs({ htmlAttributes: attributesWithValues })
+        };
 
-        app.renderComponent(componentName, shadowRoot, {
-          args: { htmlAttributes: attributesWithValues }
-        });
+        this.result = app.renderComponent(componentName, shadowRoot, { args });
       }
     },
 
     attributeChangedCallback: {
       value: function attributeChangedCallback(attr: string, oldValue: string, newValue: string) {
-        if (!this.component) return;
-        let htmlAttributes = Object.assign({}, this.component.args.htmlAttributes, { [attr]: newValue })
-        this.component.args = { htmlAttributes };
+        if (oldValue === newValue) return;
+        if (!this.args) return;
+
+        let htmlAttributes = Object.assign({}, this.args.named.htmlAttributes.value(), { [attr]: newValue })
+
+        this.args.named.htmlAttributes.set(htmlAttributes);
+        this.result.update();
       }   
     }   
   });

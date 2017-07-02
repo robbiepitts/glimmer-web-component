@@ -26,5 +26,8 @@
     "@glimmer/build": "^0.6.2",
     "ember-cli": "^2.13.2",
     "testem": "^1.16.2"
+  },
+  "dependencies": {
+    "@glimmer/runtime": "^0.26.0"
   }
 }

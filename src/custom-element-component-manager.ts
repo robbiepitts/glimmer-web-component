@@ -14,16 +14,17 @@ import {
   Template,
   CapturedArguments,
   compileLayout,
-  ComponentLayoutBuilder,
-  Simple
+  ComponentLayoutBuilder
 } from '@glimmer/runtime';
 import {
   TemplateMeta
 } from '@glimmer/wire-format';
 import Component from './custom-element-component';
 import ComponentDefinition from './custom-element-component-definition';
-import { RootReference } from '@glimmer/component';
+import { ComponentManager, RootReference } from '@glimmer/component';
 import { Dict, Destroyable, Opaque } from '@glimmer/util';
+import { Tag } from "@glimmer/reference";
+import { Simple } from "@glimmer/interfaces";
 
 export interface ConstructorOptions {
   env: Environment;
@@ -49,6 +50,10 @@ export class ComponentStateBucket {
     this.component = componentFactory.create(injections);
   }
 
+  get tag(): Tag {
+    return this.args.tag;
+  }
+
   namedArgsSnapshot(): Readonly<Dict<Opaque>> {
     return Object.freeze(this.args.named.value());
   }
@@ -68,42 +73,11 @@ class LayoutCompiler {
   }
 }
 
-export default class ComponentManager implements GlimmerComponentManager<ComponentStateBucket> {
-  private env: Environment;
-
-  static create(options: ConstructorOptions): ComponentManager {
-    return new ComponentManager(options);
-  }
-
-  constructor(options: ConstructorOptions) {
-    this.env = options.env;
-  }
-
-  prepareArgs(definition: ComponentDefinition, args: Arguments): null {
-    return null;
-  }
-
-  create(environment: Environment, definition: ComponentDefinition, volatileArgs: Arguments): ComponentStateBucket {
-    let componentFactory = definition.componentFactory;
-    if (!componentFactory) { throw 'Bad'; }
-
-    let owner = getOwner(this.env);
-    return new ComponentStateBucket(definition, volatileArgs.capture(), owner);
-  }
-
-  createComponentDefinition(name: string, template: Template<any>, componentFactory: Factory<Component>): ComponentDefinition {
-    return new ComponentDefinition(name, this, template, componentFactory);
-  }
-
+export default class CustomElementComponentManager extends ComponentManager {
   layoutFor(definition: ComponentDefinition, bucket: ComponentStateBucket, env: Environment): CompiledDynamicProgram {
     let template = definition.template;
 
     return compileLayout(new LayoutCompiler(definition.name, template), this.env);
-  }
-
-  getSelf(bucket: ComponentStateBucket): RootReference {
-    if (!bucket) { throw 'Bad'; }
-    return new RootReference(bucket.component);
   }
 
   didRenderLayout(bucket: ComponentStateBucket, bounds: Bounds) {
@@ -113,29 +87,5 @@ export default class ComponentManager implements GlimmerComponentManager<Compone
   didCreate(bucket: ComponentStateBucket) {
     (bucket.component.element as any)['component'] = bucket.component;
     bucket.component.didAppendLayout();
-  }
-
-  getTag(): null {
-    return null;
-  }
-
-  update(bucket: ComponentStateBucket, scope: DynamicScope) {
-    if (!bucket) { return; }
-
-    // TODO: This should be moved to `didUpdate`, but there's currently a
-    // Glimmer bug that causes it not to be called if the layout doesn't update.
-    let { component } = bucket;
-
-    component.didUpdate();
-  }
-
-  didUpdateLayout() {}
-
-  didUpdate(bucket: ComponentStateBucket) { }
-
-  getDestructor(bucket: ComponentStateBucket): Destroyable {
-    if (!bucket) { throw 'Bad'; }
-
-    return bucket.component;
   }
 }
